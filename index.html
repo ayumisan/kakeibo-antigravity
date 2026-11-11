@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>かんたん家計簿</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --income: #10b981;
+      --expense: #ef4444;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-bottom: 40px;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .month-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card);
+      padding: 4px 8px;
+      border-radius: 999px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      border: 1px solid var(--border);
+    }
+
+    .month-selector button {
+      background: none;
+      border: none;
+      font-size: 1rem;
+      padding: 4px 8px;
+      cursor: pointer;
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    .month-selector input[type="month"] {
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      background: transparent;
+      outline: none;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border: 1px solid var(--border);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .balance-box {
+      text-align: center;
+    }
+
+    .label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    .balance-amount {
+      font-size: 1.75rem;
+      font-weight: 800;
+    }
+
+    .amount-income {
+      color: var(--income);
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .amount-expense {
+      color: var(--expense);
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    /* Form Styles */
+    .type-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+      background: var(--bg);
+      padding: 4px;
+      border-radius: 8px;
+    }
+
+    .type-btn {
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: transparent;
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+
+    .type-btn.active[data-type="expense"] {
+      background: var(--expense);
+      color: #fff;
+    }
+
+    .type-btn.active[data-type="income"] {
+      background: var(--income);
+      color: #fff;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    input[type="date"],
+    input[type="number"],
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+      background: #fff;
+      color: var(--text);
+      appearance: none;
+    }
+
+    input:focus, select:focus {
+      outline: 2px solid var(--primary);
+      border-color: transparent;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    .submit-btn:active {
+      opacity: 0.9;
+    }
+
+    /* Section Titles */
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Category Breakdown */
+    .cat-item {
+      margin-bottom: 10px;
+    }
+    .cat-item:last-child {
+      margin-bottom: 0;
+    }
+    .cat-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+    }
+    .bar-bg {
+      height: 8px;
+      background: var(--bg);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+
+    /* Transaction List */
+    .tx-list {
+      list-style: none;
+    }
+    .tx-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 8px;
+    }
+    .tx-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .tx-left {
+      min-width: 0;
+      flex: 1;
+    }
+    .tx-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+    .tx-date {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .tx-cat {
+      font-size: 0.72rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .tx-memo {
+      font-size: 0.9rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tx-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .tx-amount {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .del-btn {
+      background: #fee2e2;
+      color: var(--expense);
+      border: none;
+      border-radius: 6px;
+      width: 28px;
+      height: 28px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .empty-msg {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      padding: 16px 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>かんたん家計簿</h1>
+    <div class="month-selector">
+      <button type="button" id="prevMonth" aria-label="前月">‹</button>
+      <input type="month" id="currentMonth">
+      <button type="button" id="nextMonth" aria-label="翌月">›</button>
+    </div>
+  </header>
+
+  <!-- 月別サマリー -->
+  <section class="card">
+    <div class="balance-box">
+      <div class="label">今月の収支</div>
+      <div class="balance-amount" id="totalBalance">¥0</div>
+    </div>
+    <div class="summary-grid">
+      <div class="balance-box">
+        <div class="label">収入</div>
+        <div class="amount-income" id="totalIncome">¥0</div>
+      </div>
+      <div class="balance-box">
+        <div class="label">支出</div>
+        <div class="amount-expense" id="totalExpense">¥0</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 登録フォーム -->
+  <section class="card">
+    <form id="txForm">
+      <div class="type-toggle">
+        <button type="button" class="type-btn active" data-type="expense">支出</button>
+        <button type="button" class="type-btn" data-type="income">収入</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="txDate">日付</label>
+          <input type="date" id="txDate" required>
+        </div>
+        <div class="form-group">
+          <label for="txCategory">カテゴリ</label>
+          <select id="txCategory" required></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="txAmount">金額 (円)</label>
+          <input type="number" id="txAmount" inputmode="numeric" min="1" step="1" placeholder="0" required>
+        </div>
+        <div class="form-group">
+          <label for="txMemo">メモ</label>
+          <input type="text" id="txMemo" maxlength="50" placeholder="任意 (例: ランチ)">
+        </div>
+      </div>
+      <button type="submit" class="submit-btn">登録する</button>
+    </form>
+  </section>
+
+  <!-- カテゴリ別内訳 -->
+  <section class="card">
+    <div class="section-title">
+      <span>カテゴリ別内訳（支出）</span>
+    </div>
+    <div id="categoryBreakdown"></div>
+  </section>
+
+  <!-- 履歴一覧 -->
+  <section class="card">
+    <div class="section-title">
+      <span>明細一覧</span>
+      <span id="txCount" style="font-size: 0.8rem; color: var(--muted); font-weight: normal;">0件</span>
+    </div>
+    <ul class="tx-list" id="txList"></ul>
+  </section>
+</div>
+
+<script>
+(() => {
+  const STORAGE_KEY = 'kakeibo_transactions_v1';
+
+  const CATEGORIES = {
+    expense: ['食費', '日用品', '交通費', '交際費', '趣味・娯楽', '住居・通信', '水道光熱費', '医療・保険', 'その他支出'],
+    income: ['給与', '賞与', '副業', '臨時収入', 'その他収入']
+  };
+
+  let transactions = [];
+  let currentType = 'expense';
+
+  // DOM要素
+  const monthInput = document.getElementById('currentMonth');
+  const prevMonthBtn = document.getElementById('prevMonth');
+  const nextMonthBtn = document.getElementById('nextMonth');
+  const totalBalanceEl = document.getElementById('totalBalance');
+  const totalIncomeEl = document.getElementById('totalIncome');
+  const totalExpenseEl = document.getElementById('totalExpense');
+  const txForm = document.getElementById('txForm');
+  const typeBtns = document.querySelectorAll('.type-btn');
+  const txDate = document.getElementById('txDate');
+  const txCategory = document.getElementById('txCategory');
+  const txAmount = document.getElementById('txAmount');
+  const txMemo = document.getElementById('txMemo');
+  const categoryBreakdownEl = document.getElementById('categoryBreakdown');
+  const txListEl = document.getElementById('txList');
+  const txCountEl = document.getElementById('txCount');
+
+  // 数値フォーマット (円)
+  const formatYen = (num) => {
+    const sign = num < 0 ? '-' : '';
+    return sign + '¥' + Math.abs(num).toLocaleString('ja-JP');
+  };
+
+  // 今日の日付文字列取得 (YYYY-MM-DD)
+  const getTodayStr = () => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  // データの読み込み・保存
+  const loadData = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      transactions = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(transactions)) transactions = [];
+    } catch (e) {
+      transactions = [];
+    }
+  };
+
+  const saveData = () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+  };
+
+  // カテゴリ選択肢の更新
+  const updateCategoryOptions = () => {
+    txCategory.replaceChildren();
+    CATEGORIES[currentType].forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat;
+      opt.textContent = cat;
+      txCategory.appendChild(opt);
+    });
+  };
+
+  // 月の変更ヘルパー
+  const shiftMonth = (delta) => {
+    const [y, m] = monthInput.value.split('-').map(Number);
+    const d = new Date(y, m - 1 + delta, 1);
+    const ny = d.getFullYear();
+    const nm = String(d.getMonth() + 1).padStart(2, '0');
+    monthInput.value = `${ny}-${nm}`;
+    render();
+  };
+
+  // 描画処理 (textContentのみで安全にDOM構築)
+  const render = () => {
+    const selectedMonth = monthInput.value; // YYYY-MM
+    const monthlyTx = transactions
+      .filter(t => typeof t.date === 'string' && t.date.startsWith(selectedMonth))
+      .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+
+    let income = 0;
+    let expense = 0;
+    const catTotals = {};
+
+    monthlyTx.forEach(t => {
+      const amt = Number(t.amount) || 0;
+      if (t.type === 'income') {
+        income += amt;
+      } else {
+        expense += amt;
+        catTotals[t.category] = (catTotals[t.category] || 0) + amt;
+      }
+    });
+
+    const balance = income - expense;
+    totalIncomeEl.textContent = formatYen(income);
+    totalExpenseEl.textContent = formatYen(expense);
+    totalBalanceEl.textContent = (balance > 0 ? '+' : '') + formatYen(balance);
+    totalBalanceEl.style.color = balance < 0 ? 'var(--expense)' : 'var(--text)';
+
+    // カテゴリ別内訳の描画
+    categoryBreakdownEl.replaceChildren();
+    const sortedCats = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
+
+    if (sortedCats.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-msg';
+      empty.textContent = 'この月の支出データはありません';
+      categoryBreakdownEl.appendChild(empty);
+    } else {
+      sortedCats.forEach(([cat, amt]) => {
+        const pct = expense > 0 ? Math.round((amt / expense) * 100) : 0;
+
+        const item = document.createElement('div');
+        item.className = 'cat-item';
+
+        const header = document.createElement('div');
+        header.className = 'cat-header';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = cat;
+
+        const valSpan = document.createElement('span');
+        valSpan.textContent = `${formatYen(amt)} (${pct}%)`;
+
+        header.append(nameSpan, valSpan);
+
+        const barBg = document.createElement('div');
+        barBg.className = 'bar-bg';
+
+        const barFill = document.createElement('div');
+        barFill.className = 'bar-fill';
+        barFill.style.width = `${pct}%`;
+        barFill.style.backgroundColor = 'var(--expense)';
+
+        barBg.appendChild(barFill);
+        item.append(header, barBg);
+        categoryBreakdownEl.appendChild(item);
+      });
+    }
+
+    // 明細一覧の描画
+    txListEl.replaceChildren();
+    txCountEl.textContent = `${monthlyTx.length}件`;
+
+    if (monthlyTx.length === 0) {
+      const empty = document.createElement('li');
+      empty.className = 'empty-msg';
+      empty.textContent = '明細がありません';
+      txListEl.appendChild(empty);
+    } else {
+      monthlyTx.forEach(t => {
+        const li = document.createElement('li');
+        li.className = 'tx-item';
+
+        const left = document.createElement('div');
+        left.className = 'tx-left';
+
+        const meta = document.createElement('div');
+        meta.className = 'tx-meta';
+
+        const dateSpan = document.createElement('span');
+        dateSpan.className = 'tx-date';
+        dateSpan.textContent = t.date;
+
+        const catSpan = document.createElement('span');
+        catSpan.className = 'tx-cat';
+        catSpan.textContent = t.category;
+
+        meta.append(dateSpan, catSpan);
+
+        const memoDiv = document.createElement('div');
+        memoDiv.className = 'tx-memo';
+        memoDiv.textContent = t.memo || '（メモなし）';
+        if (!t.memo) memoDiv.style.color = 'var(--muted)';
+
+        left.append(meta, memoDiv);
+
+        const right = document.createElement('div');
+        right.className = 'tx-right';
+
+        const amtSpan = document.createElement('span');
+        amtSpan.className = 'tx-amount';
+        amtSpan.style.color = t.type === 'income' ? 'var(--income)' : 'var(--expense)';
+        amtSpan.textContent = (t.type === 'income' ? '+' : '-') + formatYen(Number(t.amount));
+
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'del-btn';
+        delBtn.setAttribute('aria-label', '削除');
+        delBtn.textContent = '✕';
+        delBtn.addEventListener('click', () => {
+          if (confirm('この明細を削除しますか？')) {
+            transactions = transactions.filter(item => item.id !== t.id);
+            saveData();
+            render();
+          }
+        });
+
+        right.append(amtSpan, delBtn);
+        li.append(left, right);
+        txListEl.appendChild(li);
+      });
+    }
+  };
+
+  // イベント設定
+  typeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentType = btn.dataset.type;
+      typeBtns.forEach(b => b.classList.toggle('active', b === btn));
+      updateCategoryOptions();
+    });
+  });
+
+  txForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const amountVal = parseInt(txAmount.value, 10);
+    if (!txDate.value || isNaN(amountVal) || amountVal <= 0) return;
+
+    const newTx = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      type: currentType,
+      date: txDate.value,
+      category: txCategory.value,
+      amount: amountVal,
+      memo: txMemo.value.trim(),
+      createdAt: Date.now()
+    };
+
+    transactions.push(newTx);
+    saveData();
+
+    // 登録した日付の月に表示を合わせる
+    const txMonth = txDate.value.slice(0, 7);
+    if (monthInput.value !== txMonth) {
+      monthInput.value = txMonth;
+    }
+
+    txAmount.value = '';
+    txMemo.value = '';
+    render();
+  });
+
+  prevMonthBtn.addEventListener('click', () => shiftMonth(-1));
+  nextMonthBtn.addEventListener('click', () => shiftMonth(1));
+  monthInput.addEventListener('change', () => {
+    if (monthInput.value) render();
+  });
+
+  // 初期化
+  const today = getTodayStr();
+  txDate.value = today;
+  monthInput.value = today.slice(0, 7);
+  updateCategoryOptions();
+  loadData();
+  render();
+})();
+</script>
+</body>
+</html>
